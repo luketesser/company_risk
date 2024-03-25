@@ -1,0 +1,12 @@
+Package: company_risk
+Title: Dashboard with financial indicators of various brazilian companies tha focus on credit risk.
+Version: 0.0.0.9000
+Authors@R: 
+    person("Lucas", "Tesser", , "lcstesser@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Dashboard with financial indicators of various brazilian companies tha focus on credit risk.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
