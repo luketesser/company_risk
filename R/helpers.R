@@ -233,7 +233,7 @@ re_capm |>
 
 url_deb <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/rOr8rIEqy0wSnMlXCrirYd0lyzLn6xxGSXDotzTKMomqnDv6YanJHzBj3lg3xAkDUFxl4LbESTgdx8qIrtWagrYuJw1%2FK27QjmZuivJ2iwfa1hqCW5g5zCGw0va2zlgGmgtcYd7u%2FYeDXSJBZmoxl7nTD5OpoW8qnAnNKhoRfZ5kjTiDnWidjGkOSPNZDvi2lYSwTMEZpj4hKJ5JckF1Qa%2B%2BRSV8dp6ygAlh%2BvZIi9%2Bh0DU4OoU6Dj5AzZUg6Pmqwjd7DFNAxEACZl4zXVtxZKYbn3bIE6zP5W%2FEWJO8d0AGXDv4BPzEtjMTGgfJ6ns0s30e9kaHA%2BlmL18eBQPJ9w%3D%3D"
 
-url_screenning_deb <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/ATYVbVKuQ9is3DHzKvLM2d%2FLr%2Fhw%2FVJqnytrZlTsog0jHv5ar36rZgz7Xpeadg43Oj%2BJvDZa%2FphWcggM%2Bu%2B1iTRTS0RlII5IlULHnT5rrfbZE5uVVvWw38%2B%2BUWwO19nrzcGNhHbInOrc2rf0TqwdgkdtwqPaNSzh%2FXOfmHxQPffLj2ul0M%2FbNcwaA84imXR2QOfxIO3ZtDrdkDyjjEzr9pTa0rXm56vPMugtri196Cv3g%2B2yvhz%2BR7WSUUS23%2BcwN8byMZQ7MGF%2BtNkyWjLl7B5RyRnnFkN1Rajt%2FlzO%2BK1TcUTXTjBTmN6dcLbCofrOHCviZXTsyzvwroV%2BSFxEKg%3D%3D"
+url_screenning_deb <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/qVe9Vb7LjA3bOOZG7sFJKKxg6peM65ioli4jysdWu9pkiwWDcf%2BLLz0DcC2S8ekyGsvoNs1OiVyTUs7nPyu%2BLaetpVKiSl%2FjZ6ySWK7LmxlmGNPxpUpVcc%2BS8jd%2F0si0tkpEI7B3pJkFcktlDo7oOg%2FgWBzWlDxCf6GdKjFiX2mOGuyaBn7XKflU2wj9QlU7OrSh9%2BYBn2YA%2BjZ2xEjow06QMjIddrjV5T1x2m8bcCNZrZmkN4n7mm7HbUN1Xq87Z38RNrs0hYpwuTAyu1%2Fhn%2BOba4IiZOgkVlAuyXhaEhGr%2BNob9xfQx6RQjkfZSIJPtLqCMumQjMB0tZqySyYzOw%3D%3D"
 
 deb <- vroom::vroom(file = url_deb, delim = ",", locale = vroom::locale(encoding = "latin1")) |>
   janitor::clean_names()
@@ -241,26 +241,15 @@ deb <- vroom::vroom(file = url_deb, delim = ",", locale = vroom::locale(encoding
 deb_src <- vroom::vroom(file = url_screenning_deb, delim = ",", locale = vroom::locale(encoding = "latin1")) |>
   janitor::clean_names()
 
-convert_rate <- function(type, y, y_nom, implicit){
-
-  if (type == "IPCA Spread") {
-
-    out <- y
-
-    } else if (type == "DI Spread") {
-
-    out <- ((1 + y/100)*(1 + y_nom/100)/(1 + implicit/100) - 1)*100
-
-    } else if (type == "DI Percentual") {
-
-    out <- ((1 + y_nom/100*y/100)/(1 + implicit/100) - 1)*100
-
-  }
-
+convert_rate <- function(type, y, y_nom, implicit) {
+  out <- dplyr::case_when(
+    type == "IPCA Spread" ~ y,
+    type == "DI Spread" ~ ((1 + y/100)*(1 + y_nom/100)/(1 + implicit/100) - 1)*100,
+    type == "DI Percentual" ~ ((1 + y_nom/100*y/100)/(1 + implicit/100) - 1)*100,
+    TRUE ~ NA_real_
+  )
   return(out)
-
 }
-
 
 deb_data <-  deb_src |>
   dplyr::mutate(taxa_ytm_em_percent = as.double(taxa_ytm_em_percent)) |>
@@ -268,17 +257,27 @@ deb_data <-  deb_src |>
   dplyr::filter(duration_em_dias_uteis >= 504) |>
   dplyr::mutate(y_nom = stats::spline(x = curve_nom$n.biz.days, y = curve_nom$value, xout = duration_em_dias_uteis, method = "natural")$y) |>
   dplyr::mutate(y_real = stats::spline(x = curve_real$n.biz.days, y = curve_real$value, xout = duration_em_dias_uteis, method = "natural")$y) |>
-  dplyr::mutate(implicit = ((1 + y_nom/100)/(1 + y_real/100) - 1)*100)
+  dplyr::mutate(implicit = ((1 + y_nom/100)/(1 + y_real/100) - 1)*100) |>
+  dplyr::mutate(converted_rate = convert_rate(deb_data$tipo_de_debenture, deb_data$taxa_ytm_em_percent, deb_data$y_nom, deb_data$implicit))
 
+rd_deb <- deb_data |>
+  dplyr::select(c(1:3), 7, 8, dplyr::last_col()) |>
+  dplyr::group_by(naics) |>
+  dplyr::mutate(rd_by_sector = mean(converted_rate))
 
-# filtrar para duration >= que 504 dus; ; fazer a média por setor naics ; se tiver rd pelo outro método, pegar o maior.
-# Converter as taxa no screening em ipca +: 1) ver a tx pré e real da duration do ativo; 2) fazer uma função que vê o tipo do ativo e converte a taxa conforme.
+rd_deb |>
+  ggplot2::ggplot(ggplot2::aes(x = rd_by_sector)) +
+  ggplot2::geom_density() +
+  ggplot2::geom_vline(ggplot2::aes(xintercept = median(rd_by_sector, na.rm = T)), color = "red", linetype = "dashed", size = .5) +
+  ggplot2::geom_text(ggplot2::aes(x = median(rd_deb$rd_by_sector, na.rm = T), y = 1.2), label = scales::number(median(rd_deb$rd_by_sector, na.rm = T), .0001, suffix = "%")) +
+  ggplot2::labs(title = "Debt Cost (Debêntures)")
+
+# se tiver rd pelo outro método, pegar o maior.
 
 rd_data <- credit_data |>
   dplyr::select(c(1:7), exg_at_consolid_sim, ativo_tot_em_moeda_orig_em_milhares_consolid_sim, fin_pag_em_moeda_orig_em_milhares_no_exercicio_consolid_sim) |>
   dplyr::mutate(exig = exg_at_consolid_sim/100*ativo_tot_em_moeda_orig_em_milhares_consolid_sim) |>
-  dplyr::mutate(rd_raw = -fin_pag_em_moeda_orig_em_milhares_no_exercicio_consolid_sim/exig) |>
-  dplyr::group_by(subsetor_bovespa)
+  dplyr::mutate(rd_raw = -fin_pag_em_moeda_orig_em_milhares_no_exercicio_consolid_sim/exig)
 
 percentiles <- rd_data |>
   dplyr::group_by(subsetor_bovespa) |>
@@ -300,7 +299,7 @@ rd_data |>
   ggplot2::geom_density() +
   ggplot2::geom_vline(ggplot2::aes(xintercept = median(rd_real, na.rm = T)*100), color = "red", linetype = "dashed", size = .5) +
   ggplot2::geom_text(ggplot2::aes(x = median(rd_data$rd_real, na.rm = T)*100, y = .15), label = scales::number(median(rd_data$rd_real, na.rm = T)*100, .0001, suffix = "%")) +
-  ggplot2::labs(title = "Debt Cost")
+  ggplot2::labs(title = "Debt Cost (from fin statement)")
 
 length(unique(rd_data$nome))
 
