@@ -116,6 +116,11 @@ iml <- nefin_factors |>
 
 url_stocks <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/fOrcA8M2zpawEP7zcTL%2BDdGXi0jAf01w782gXzSyS6ML8bXcv6yESKggAQx8sizbDQxdfG0W9p2zc0azxU8%2Fql7P7GuGkE3cp27dA2Yhf40IRSax1p9kP3QpxYg0psVeCbGid69Ifdh6gbhnMrzdK1KzFP2LeyJKxetgdY0AWVI5I4V8B8WAcGQ1yIQMb5KeEe5mSHdDdfvxfYJEsc8qHc1O3%2FDHcPrAtF%2Fqqone8CywAskSuUUoWG2fTBqelsdU7ISlNb%2BjwXlY8KCG4SI2TXEROwTUT%2FKAnjvHbTzo6sfcmQnohl0y1kCFwrZxAWnfTW%2Bp3XxrgkxSr%2FlAzFVAuQ%3D%3D"
 
+url_stocks_scr <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/fRsbiptEzPKHPMrvLdAWRHzh9XN%2B%2Ffqq7e8gxbyVOgoCCk94GYzNuEOrh4A%2FmXl5ASxpkKwjJyOMJ6SAdw%2FbBEC8Ds%2FPgBinPGqRl96qE41512gnszmqI4%2B5B9QG4T2F0qqgGLo%2Bh9sMFAK%2FFzoXc6YyQx1ReYkjj%2BZtTUs5Z53JI980DY0%2BNjBCRdHbN24N9IRKjGcaI6UuM%2B8OWlea9RXjkjbfOT6icb44xnJHSQCNQwjX5bo0xX%2BOUbO68Y6mjWvbBN9KX5roZEDgI%2FHxlDyt4KmsYZbdNGOx4vEboiV%2BGlB4yuZ%2FohMgHj0jSeFhRQfysT0Oo7mrnen45u86Fg%3D%3D"
+
+stocks_scr <- vroom::vroom(file = url_stocks_scr, delim = ",", locale = vroom::locale(encoding = "latin1")) |>
+  janitor::clean_names()
+
 stocks <- vroom::vroom(file = url_stocks, delim = ",", locale = vroom::locale(encoding = "latin1")) |>
   janitor::clean_names() |>
   dplyr::rename(date = data) |>
@@ -258,7 +263,7 @@ deb_data <-  deb_src |>
   dplyr::mutate(y_nom = stats::spline(x = curve_nom$n.biz.days, y = curve_nom$value, xout = duration_em_dias_uteis, method = "natural")$y) |>
   dplyr::mutate(y_real = stats::spline(x = curve_real$n.biz.days, y = curve_real$value, xout = duration_em_dias_uteis, method = "natural")$y) |>
   dplyr::mutate(implicit = ((1 + y_nom/100)/(1 + y_real/100) - 1)*100) |>
-  dplyr::mutate(converted_rate = convert_rate(deb_data$tipo_de_debenture, deb_data$taxa_ytm_em_percent, deb_data$y_nom, deb_data$implicit))
+  dplyr::mutate(converted_rate = convert_rate(tipo_de_debenture, taxa_ytm_em_percent, y_nom, implicit))
 
 rd_deb <- deb_data |>
   dplyr::select(c(1:3), 7, 8, dplyr::last_col()) |>
@@ -271,8 +276,6 @@ rd_deb |>
   ggplot2::geom_vline(ggplot2::aes(xintercept = median(rd_by_sector, na.rm = T)), color = "red", linetype = "dashed", size = .5) +
   ggplot2::geom_text(ggplot2::aes(x = median(rd_deb$rd_by_sector, na.rm = T), y = 1.2), label = scales::number(median(rd_deb$rd_by_sector, na.rm = T), .0001, suffix = "%")) +
   ggplot2::labs(title = "Debt Cost (Debêntures)")
-
-# se tiver rd pelo outro método, pegar o maior.
 
 rd_data <- credit_data |>
   dplyr::select(c(1:7), exg_at_consolid_sim, ativo_tot_em_moeda_orig_em_milhares_consolid_sim, fin_pag_em_moeda_orig_em_milhares_no_exercicio_consolid_sim) |>
@@ -303,19 +306,52 @@ rd_data |>
 
 length(unique(rd_data$nome))
 
+rd <- rd_deb |>
+  dplyr::group_by(nome, cnpj) |>
+  dplyr::summarise(nome = dplyr::first(nome), cnpj = dplyr::first(cnpj), setor = dplyr::first(naics), rd_deb = dplyr::first(rd_by_sector)) |>
+  dplyr::full_join(dplyr::select(rd_data, nome, cnpj, subsetor_bovespa, rd_real, ativo), by = "nome") |>
+  dplyr::mutate(cnpj = dplyr::coalesce(cnpj.x, cnpj.y)) |>
+  dplyr::select(-c(cnpj.x, cnpj.y)) |>
+  dplyr::mutate(rd_fin = rd_real*100) |>
+  dplyr::select(ativo, nome, cnpj, setor, subsetor_bovespa, rd_deb, rd_fin, -rd_real) |>
+  dplyr::mutate(rd = dplyr::case_when(
+    is.na(rd_deb) & is.na(rd_fin) ~ NA,
+    is.na(rd_deb) ~ rd_fin,
+    is.na(rd_fin) ~ rd_deb,
+    rd_deb >= rd_fin ~ rd_deb,
+    TRUE ~ rd_fin))
+
+# graph
+rd |>
+  ggplot2::ggplot(ggplot2::aes(x = rd)) +
+  ggplot2::geom_density() +
+  ggplot2::geom_vline(ggplot2::aes(xintercept = median(rd, na.rm = T)), color = "red", linetype = "dashed", size = .5) +
+  ggplot2::geom_text(ggplot2::aes(x = median(rd, na.rm = T), y = .4), label = scales::number(median(rd$rd, na.rm = T), .0001, suffix = "%")) +
+  ggplot2::labs(title = "Debt Cost")
+
 # Wacc
 
-wacc_5f <- re_5f |>
-  dplyr::rename(ativo = name) |>
-  dplyr::left_join(rd_data, by = "ativo") |>
-  dplyr::select(ativo, nome, codigo, cnpj, subsetor_bovespa, re, rd_real) |>
-  dplyr::filter(!is.na(rd_real) & !is.na(re)) |>
-  dplyr::left_join(credit_data_12m, by = dplyr::join_by(nome)) |>
+wd <- credit_data |>
+  dplyr::group_by(cnpj) |>
+  dplyr::filter(date == max(date)) |>
   dplyr::select(c(1:8)) |>
   dplyr::rename(wd = est_cap_pl_consolid_sim) |>
   dplyr::mutate(wd = wd/100) |>
   dplyr::mutate(we = 1 - wd) |>
-  dplyr::mutate(wacc = (we*re + wd*rd_real*(1 - .34)))
+  dplyr::select(cnpj, wd, we)
+
+
+wacc_5f <- re_5f |>
+  dplyr::rename(ativo = name) |>
+  dplyr::inner_join(stocks_scr, by = "ativo") |>
+  dplyr::select(ativo, nome, codigo, cnpj, c(2:8)) |>
+  dplyr::left_join(dplyr::select(rd, c("cnpj", "setor", "subsetor_bovespa", "rd"), by = "cnpj")) |>
+  dplyr::select(ativo, nome, codigo, cnpj,setor, subsetor_bovespa, re, rd) |>
+  dplyr::filter(!is.na(re) & !is.na(rd)) |>
+  dplyr::filter(re > 0 & rd > 0) |>
+  dplyr::mutate(rd = rd/100) |>
+  dplyr::inner_join(wd, by = "cnpj") |>
+  dplyr::mutate(wacc = we*re + wd*rd*(1 - .34))
 
 # graph
 wacc_5f |>
