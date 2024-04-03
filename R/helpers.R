@@ -21,31 +21,70 @@ credit_data <- data |>
   dplyr::select(dplyr::last_col(4), dplyr::last_col(3), dplyr::last_col(2), dplyr::last_col(1), dplyr::last_col(), everything()) |>
   dplyr::mutate(dplyr::across(c(8:dplyr::last_col()), as.double))
 
+setores <- credit_data |>
+  dplyr::group_by(nome) |>
+  dplyr::filter(date == max(date)) |>
+  dplyr::select(nome, subsetor_bovespa, cnpj)
+
+credit_data_setor <- credit_data |>
+  dplyr::group_by(nome) |>
+  dplyr::filter(date == max(date)) |>
+  dplyr::ungroup() |>
+  dplyr::group_by(subsetor_bovespa) |>
+  dplyr::mutate(subsetor_bovespa = dplyr::if_else(subsetor_bovespa == "-", "Outros", subsetor_bovespa)) |>
+  dplyr::summarise(dplyr::across(c(8:50), mean, na.rm = T))
+
 credit_data_12m <- credit_data |>
   dplyr::group_by(nome) |>
   dplyr::slice((dplyr::n() - 3):dplyr::n()) |>
-  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T))
+  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T)) |>
+  dplyr::inner_join(setores)
+
+credit_data_12m_setor <- credit_data_12m |>
+  dplyr::group_by(subsetor_bovespa) |>
+  dplyr::mutate(subsetor_bovespa = dplyr::if_else(subsetor_bovespa == "-", "Outros", subsetor_bovespa)) |>
+  dplyr::summarise(dplyr::across(c(2:45), mean, na.rm = T))
 
 credit_data_24m <- credit_data |>
   dplyr::group_by(nome) |>
   dplyr::slice((dplyr::n() - 7):dplyr::n()) |>
-  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T))
+  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T)) |>
+  dplyr::inner_join(setores)
+
+credit_data_24m_setor <- credit_data_24m |>
+  dplyr::group_by(subsetor_bovespa) |>
+  dplyr::mutate(subsetor_bovespa = dplyr::if_else(subsetor_bovespa == "-", "Outros", subsetor_bovespa)) |>
+  dplyr::summarise(dplyr::across(c(2:45), mean, na.rm = T))
 
 credit_data_36m <- credit_data |>
   dplyr::group_by(nome) |>
   dplyr::slice((dplyr::n() - 11):dplyr::n()) |>
-  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T))
+  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T)) |>
+  dplyr::inner_join(setores)
+
+credit_data_36m_setor <- credit_data_36m |>
+  dplyr::group_by(subsetor_bovespa) |>
+  dplyr::mutate(subsetor_bovespa = dplyr::if_else(subsetor_bovespa == "-", "Outros", subsetor_bovespa)) |>
+  dplyr::summarise(dplyr::across(c(2:45), mean, na.rm = T))
 
 credit_data_60m <- credit_data |>
   dplyr::group_by(nome) |>
   dplyr::slice((dplyr::n() - 19):dplyr::n()) |>
-  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T))
+  dplyr::summarise(dplyr::across(c(7:50), mean , na.rm = T)) |>
+  dplyr::inner_join(setores)
+
+credit_data_60m_setor <- credit_data_60m |>
+  dplyr::group_by(subsetor_bovespa) |>
+  dplyr::mutate(subsetor_bovespa = dplyr::if_else(subsetor_bovespa == "-", "Outros", subsetor_bovespa)) |>
+  dplyr::summarise(dplyr::across(c(2:45), mean, na.rm = T))
 
 credit_data_list <- list(margem = credit_data, anual = credit_data_12m, bianual = credit_data_24m, trianual = credit_data_36m, pentanual = credit_data_60m)
+credit_data_list_setor <- list(margem = credit_data_setor, anual = credit_data_12m_setor, bianual = credit_data_24m_setor, trianual = credit_data_36m_setor, pentanual = credit_data_60m_setor)
 
 
 saveRDS(credit_data, "Data/credit_data.rds")
 saveRDS(credit_data_list, "Data/credit_data_list.rds")
+saveRDS(credit_data_list_setor, "Data/credit_data_list_setor.rds")
 
 # Wacc calculations ------------------------------------------------------------
 
@@ -360,3 +399,5 @@ wacc_5f |>
   ggplot2::geom_vline(ggplot2::aes(xintercept = median(wacc, na.rm = T)*100), color = "red", linetype = "dashed", size = .5) +
   ggplot2::geom_text(ggplot2::aes(x = median(wacc_5f$wacc, na.rm = T)*100, y = .22), label = scales::number(median(wacc_5f$wacc, na.rm = T)*100, .0001, suffix = "%")) +
   ggplot2::labs(title = "WACC Real")
+
+saveRDS(wacc_5f, "Data/wacc_5f.rds")

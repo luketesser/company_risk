@@ -16,6 +16,8 @@ library(vroom)
 # source("R/helpers.R")
 
 credit_data <- readRDS("../Data/credit_data_list.rds")
+credit_data_setor <- readRDS("../Data/credit_data_list_setor.rds")
+wacc_5f <- readRDS("../Data/wacc_5f.rds")
 
 # Application UI ---------------------------------------------------------------
 
@@ -69,11 +71,14 @@ ui <- bs4Dash::dashboardPage(
     bs4Dash::sidebarMenu(
 
       bs4Dash::menuItem("Indicadores", tabName = "indicadores", icon = shiny::icon("chart-simple")), # fontawesome.com/search?q=chart&o=r&m=free
+      bs4Dash::menuItem("Setor", tabName = "setor", icon = shiny::icon("chart-simple")),
       bs4Dash::menuItem("WACC", tabName = "wacc", icon = shiny::icon("chart-simple"))),
 
     bs4Dash::sidebarMenu(shiny::selectInput(inputId = "company", label = "Empresa", choices = unique(credit_data$margem$nome), selectize = TRUE)),
 
-    bs4Dash::sidebarMenu(shiny::selectInput(inputId = "period", label = "Período", choices = unique(tibble::as_tibble_col(names(credit_data), column_name = "names")$names), selectize = TRUE))
+    bs4Dash::sidebarMenu(shiny::selectInput(inputId = "period", label = "Período", choices = unique(tibble::as_tibble_col(names(credit_data), column_name = "names")$names), selectize = TRUE)),
+
+    bs4Dash::sidebarMenu(shiny::selectInput(inputId = "setor", label = "Setor", choices = unique(credit_data_setor$margem$subsetor_bovespa), selectize = TRUE))
 
   ),
 
@@ -89,37 +94,75 @@ ui <- bs4Dash::dashboardPage(
 
         tabName = "indicadores", # must match the tabname in the sidebar
 
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "divliq_pat")),
+        shiny::fluidRow(bs4Dash::column(width = 4,
+                                        bs4Dash::infoBoxOutput(outputId = "divliq_pat"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_ebitda"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_corrente"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_corrente"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_seca"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_geral"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_cp"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_lp"),
+                                        bs4Dash::infoBoxOutput(outputId = "margem_ebitda"),
+                                        bs4Dash::infoBoxOutput(outputId = "margem_liq"),
+                                        bs4Dash::infoBoxOutput(outputId = "fcl_divcp")
+                                        ),
 
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "div_ebitda")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "liq_corrente")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "liq_seca")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "liq_geral")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "div_cp")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "div_lp")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "margem_ebitda")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "margem_liq")),
-
-        shiny::fluidRow(bs4Dash::infoBoxOutput(outputId = "fcl_divcp"))
-
-        # shiny::fluidRow(bs4Dash::box(shiny::plotOutput("test_plot"), title = "test", collapsible = T, collapsed = T, solidHeader = T, status = "primary"))
+                        bs4Dash::column(width = 8,
+                                        bs4Dash::infoBoxOutput(outputId = "divliq_pat_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_ebitda_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_corrente_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_seca_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "liq_geral_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_cp_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "div_lp_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "margem_ebitda_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "margem_liq_setor"),
+                                        bs4Dash::infoBoxOutput(outputId = "fcl_divcp_setor")
+                                        )
 
 
-
+        )
       ),
 
      bs4Dash::tabItem(
 
-       tabName = "wacc" # must match the tabname in the sidebar
+       tabName = "setor",
+
+       shiny::fluidRow(
+
+         bs4Dash::infoBoxOutput(outputId = "divliq_pat_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "div_ebitda_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "liq_corrente_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "liq_seca_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "liq_geral_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "div_cp_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "div_lp_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "margem_ebitda_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "margem_liq_tabsetor"),
+         bs4Dash::infoBoxOutput(outputId = "fcl_divcp_tabsetor")
+
+       )
+
+     ),
+
+     bs4Dash::tabItem(
+
+       tabName = "wacc",
+
+       shiny::fluidRow(
+
+         bs4Dash::infoBoxOutput(outputId = "we"),
+         bs4Dash::infoBoxOutput(outputId = "wd"),
+         bs4Dash::infoBoxOutput(outputId = "re"),
+         bs4Dash::infoBoxOutput(outputId = "rd"),
+         bs4Dash::infoBoxOutput(outputId = "wacc_5f")
+
+       )
 
      )
+
+
 
     )
 
@@ -148,23 +191,26 @@ credit_data_reactive <- shiny::reactive({
 
 })
 
-  # output$test_plot <- shiny::renderPlot({
-  #
-  #   cucu_data <- reactive({
-  #
-  #     cucu1 <- credit_data |>
-  #       filter(nome == input$company)
-  #
-  #     return(cucu1)
-  #
-  #   })
-  #
-  #   cucu_data() |>
-  #     ggplot2::ggplot(ggplot2::aes(x = date,  y = est_cap_pl_consolid_sim)) +
-  #     ggplot2::geom_col() +
-  #     ggthemes::theme_economist()
-  #
-  # })
+credit_data_reactive_setor <- shiny::reactive({
+
+  credit_data_setor[[input$period]]
+
+})
+
+credit_data_reactive_tabsetor <- shiny::reactive({
+
+  credit_data_setor[[input$period]] |>
+    dplyr::filter(subsetor_bovespa == input$setor)
+
+})
+
+wacc_rf_reactive <- shiny::reactive({
+
+  wacc_5f |>
+    dplyr::filter(nome == input$company)
+
+})
+
 
   output$divliq_pat <- bs4Dash::renderInfoBox({
 
@@ -176,6 +222,21 @@ credit_data_reactive <- shiny::reactive({
 
   })
 
+  output$divliq_pat_setor <- bs4Dash::renderInfoBox({
+
+    setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+    value <- credit_data_reactive_setor() |>
+      dplyr::filter(subsetor_bovespa == setor) |>
+      dplyr::mutate(divliq_pat = div_tt_lq_em_moeda_orig_em_milhares_consolid_sim/patrim_liq_em_moeda_orig_em_milhares_consolid_sim)
+
+    value <- dplyr::last(value)$divliq_pat
+
+    bs4Dash::infoBox(title = paste("Dívida Líquida/PL", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                     icon = shiny::icon("chart-line"))
+
+  })
+
   output$div_ebitda <- bs4Dash::renderInfoBox({
 
     bs4Dash::infoBox(title = "Dívida Líquida vs EBITDA 3 meses em %", value = scales::number(dplyr::last(credit_data_reactive()$div_lq_ebitda_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
@@ -183,9 +244,37 @@ credit_data_reactive <- shiny::reactive({
 
  })
 
+  output$div_ebitda_setor <- bs4Dash::renderInfoBox({
+
+    setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+    value <- credit_data_reactive_setor() |>
+      dplyr::filter(subsetor_bovespa == setor)
+
+    value <- value$div_lq_ebitda_de_3_meses_consolid_sim
+
+    bs4Dash::infoBox(title = paste("Dívida Líquida vs EBITDA 3 meses em %", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                     icon = shiny::icon("chart-line"))
+
+  })
+
   output$liq_corrente <- bs4Dash::renderInfoBox({
 
     bs4Dash::infoBox(title = "Liquidez Corrente (em vezes)", value = scales::number(dplyr::last(credit_data_reactive()$liq_cor_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                     icon = shiny::icon("chart-line"))
+
+  })
+
+  output$liq_corrente_setor <- bs4Dash::renderInfoBox({
+
+    setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+    value <- credit_data_reactive_setor() |>
+      dplyr::filter(subsetor_bovespa == setor)
+
+    value <- value$liq_cor_consolid_sim
+
+    bs4Dash::infoBox(title = paste("Liquidez Corrente (em vezes)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
                      icon = shiny::icon("chart-line"))
 
   })
@@ -197,16 +286,58 @@ credit_data_reactive <- shiny::reactive({
 
   })
 
-  output$liq_geral <- bs4Dash::renderInfoBox({
+  output$liq_seca_setor <- bs4Dash::renderInfoBox({
+
+    setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+    value <- credit_data_reactive_setor() |>
+      dplyr::filter(subsetor_bovespa == setor)
+
+    value <- value$liq_sec_consolid_sim
+
+    bs4Dash::infoBox(title = paste("Liquidez Seca (em vezes)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                     icon = shiny::icon("chart-line"))
+
+  })
+
+ output$liq_geral <- bs4Dash::renderInfoBox({
 
     bs4Dash::infoBox(title = "Liquidez Geral (em vezes)", value = scales::number(dplyr::last(credit_data_reactive()$liq_ger_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ","),
                      icon = shiny::icon("chart-line"))
 
   })
 
+ output$liq_geral_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor)
+
+   value <- value$liq_ger_consolid_sim
+
+   bs4Dash::infoBox(title = paste("Liquidez Geral (em vezes)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
  output$div_cp <- bs4Dash::renderInfoBox({
 
    bs4Dash::infoBox(title = "Dívida no Curto Prazo (%)", value = scales::number(dplyr::last(credit_data_reactive()$div_cp_div_tt_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$div_cp_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor)
+
+   value <- value$div_cp_div_tt_consolid_sim
+
+   bs4Dash::infoBox(title = paste("Dívida no Curto Prazo (%)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
                     icon = shiny::icon("chart-line"))
 
  })
@@ -218,6 +349,20 @@ credit_data_reactive <- shiny::reactive({
 
  })
 
+ output$div_lp_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor)
+
+   value <- value$div_cp_div_tt_consolid_sim
+
+   bs4Dash::infoBox(title = paste("Dívida no Longo Prazo (%)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
  output$margem_ebitda <- bs4Dash::renderInfoBox({
 
    bs4Dash::infoBox(title = "Margem Ebitda (%)", value = scales::number(dplyr::last(credit_data_reactive()$mrg_ebitda_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
@@ -225,9 +370,37 @@ credit_data_reactive <- shiny::reactive({
 
  })
 
+ output$margem_ebitda_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor)
+
+   value <- value$mrg_ebitda_de_3_meses_consolid_sim
+
+     bs4Dash::infoBox(title = paste("Margem Ebitda (%)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                      icon = shiny::icon("chart-line"))
+
+ })
+
  output$margem_liq <- bs4Dash::renderInfoBox({
 
    bs4Dash::infoBox(title = "Margem Líquida (%)", value = scales::number(dplyr::last(credit_data_reactive()$margem_liquida_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$margem_liq_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor)
+
+   value <- value$margem_liquida_de_3_meses_consolid_sim
+
+   bs4Dash::infoBox(title = paste("Margem Líquida (%)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
                     icon = shiny::icon("chart-line"))
 
  })
@@ -242,11 +415,138 @@ credit_data_reactive <- shiny::reactive({
 
  })
 
+ output$fcl_divcp_setor <- bs4Dash::renderInfoBox({
+
+   setor <- credit_data_reactive()$subsetor_bovespa[1]
+
+   value <- credit_data_reactive_setor() |>
+     dplyr::filter(subsetor_bovespa == setor) |>
+     dplyr::mutate(value = (fcl_em_moeda_orig_no_exercicio_consolid_sim) /
+                           (div_cp_div_tt_consolid_sim))
+
+   value <- dplyr::last(value)$value
+
+   bs4Dash::infoBox(title = paste("Caixa/Dívida de CP", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$divliq_pat_tabsetor <- bs4Dash::renderInfoBox({
+
+   divliq_pat <- credit_data_reactive_tabsetor() |>
+     dplyr::mutate(divliq_pat = div_tt_lq_em_moeda_orig_em_milhares_consolid_sim/patrim_liq_em_moeda_orig_em_milhares_consolid_sim)
+
+   bs4Dash::infoBox(title = "Dívida Líquida/PL", value = scales::number(dplyr::last(divliq_pat$divliq_pat), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$div_ebitda_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Dívida Líquida vs EBITDA 3 meses em %", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$div_lq_ebitda_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$liq_corrente_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Liquidez Corrente (em vezes)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$liq_cor_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$liq_seca_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Liquidez Seca (em vezes)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$liq_sec_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$liq_geral_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Liquidez Geral (em vezes)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$liq_ger_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$div_cp_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Dívida no Curto Prazo (%)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$div_cp_div_tt_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$div_lp_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Dívida no Longo Prazo (%)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$div_cp_div_tt_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$margem_ebitda_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Margem Ebitda (%)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$mrg_ebitda_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$margem_liq_tabsetor <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Margem Líquida (%)", value = scales::number(dplyr::last(credit_data_reactive_tabsetor()$margem_liquida_de_3_meses_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$fcl_divcp_tabsetor <- bs4Dash::renderInfoBox({
+
+   value <- dplyr::last(credit_data_reactive_tabsetor()$fcl_em_moeda_orig_no_exercicio_consolid_sim) /
+     dplyr::last(credit_data_reactive_tabsetor()$div_cp_div_tt_consolid_sim)
+
+   bs4Dash::infoBox(title = "Caixa/Dívida de CP", value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$we <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "WE (%) - Equity Cost Weight", value = scales::number(wacc_rf_reactive()$we[1]*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$wd <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "WD (%) - Debt Cost Weight", value = scales::number(wacc_rf_reactive()$wd[1]*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$re <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "RE (%) - Equity Cost", value = scales::number(wacc_rf_reactive()$re[1]*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$rd <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "RD (%) - Debt Cost (tax free)", value = scales::number(wacc_rf_reactive()$rd[1]*(1 - .34)*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$wacc_5f <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "WACC (%) - Real Terms", value = scales::number(wacc_rf_reactive()$wacc[1]*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
 }
 
 # Shiny App --------------------------------------------------------------------
 
 shinyApp(ui, server)
 
-
-# Fazer uma aba em que ve as mesmas coisas só que podendo filtrar por setor.
+# Incluir os valores para o setor da empresa
+# Talvez incluir o gráfico da distribuição do wacc indicando o ponto onde a empresa se encontra. Dentro do setor tb?
