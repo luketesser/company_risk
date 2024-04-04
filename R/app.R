@@ -550,3 +550,4 @@ shinyApp(ui, server)
 
 # Incluir os valores para o setor da empresa
 # Talvez incluir o gráfico da distribuição do wacc indicando o ponto onde a empresa se encontra. Dentro do setor tb?
+# Merton Model

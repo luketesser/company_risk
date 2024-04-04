@@ -4,7 +4,9 @@
 
 url <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/mdZmSrKkd8%2B%2FgpHLsy%2BYgB5W%2FiKXxQT85DHWmX6DrEq%2Blj3SAeSpj3J77HCO9%2BpwTrYIw5EfZbNeWBtV5gDnmatTA3dnmIBkQty2vvE6LzJHQaBvQ20REA7RYUitWBmg4E3CiB8auOodMQcthhr2w0qt%2BExAM9P5r9%2B60vJ0zdSngZ0E0ZSTbg4Y7Fu97hbnJMBl1BeS9Ss6JUf1awjAGalpwOOvCc%2Fis0HM6axhjq8OQhJi3WYAQAhYS%2Fulk9jrWisShWEy2IRiLskxskOEF%2FvTntqpHY3bLWpnDLU6WZ9uMtBShCRcUjCQYn9IEBdNoWyWfhIsBqJp94xmz0LoAw%3D%3D"
 
-url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/gwLQ37fNt88xFQzAEDvgHbNKFajTXJ6GhSVu6IS5osOfqHayUOhOYOZ0aU85iFKOp9siH0C1jkRSZeVsOJdqTnxtQBOlQ7Ri0Y7DHiRgtx7aHXIrpR%2Fl9bVSfkM%2B7beTlP%2BJGDkNd7HYxLwn50RFGDvXHy%2BaCif3E9JB2IKzpZrPtxs%2F4tSpUsj0eW2TeCQ6ATKKIITeB8kuJOQUL%2BTX3nxanvh9p5eB3IZQ1TklXO8gvXSJvhXAqOqXjpofspCCYG19AQc4Lo2a4%2BzNbjHoHKx9WEo5l5mzk%2F40ZzH%2B8R%2BQC6JFTFf8SYSL4njD%2Fbu%2BwfheJc%2FH%2BeBOXtJtwvE9tg%3D%3D"
+# url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/gwLQ37fNt88xFQzAEDvgHbNKFajTXJ6GhSVu6IS5osOfqHayUOhOYOZ0aU85iFKOp9siH0C1jkRSZeVsOJdqTnxtQBOlQ7Ri0Y7DHiRgtx7aHXIrpR%2Fl9bVSfkM%2B7beTlP%2BJGDkNd7HYxLwn50RFGDvXHy%2BaCif3E9JB2IKzpZrPtxs%2F4tSpUsj0eW2TeCQ6ATKKIITeB8kuJOQUL%2BTX3nxanvh9p5eB3IZQ1TklXO8gvXSJvhXAqOqXjpofspCCYG19AQc4Lo2a4%2BzNbjHoHKx9WEo5l5mzk%2F40ZzH%2B8R%2BQC6JFTFf8SYSL4njD%2Fbu%2BwfheJc%2FH%2BeBOXtJtwvE9tg%3D%3D"
+
+url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/TrFrvsaBVvj0cCt7yROZY31S7z6EALX1daODKIpgk07F5Z%2F5h3dIrVc2BoZFZPrydR5zFPFfeXgl8UOAkFbrI1at2KZzySumQ1FCOpJA8EgesqrI60ctCElwD9EJTlSCy%2BDsLNs0YYz8Vw5Uz7AOJa6IV0bicUeVHw%2FyX0hVeOQugOJh6mjUetkm6lgqJtlxduXuV0nPHBsUR7XKV44bvrBkEugtZJjBUBHOCTqEwxOdMZH9mk5X9Uql8AuBHbskzoGHguWXuqw%2F4tRpNerQPsvJ0WSEU9JkuNVhGFnjjpiC08T3dSGJL1ml5UUqaJdb58aLIeSGA3nlvNgNJ4YTAw%3D%3D"
 
 # url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/kDTT31rRCcBvGk753nfs9FU%2BbPflomweKgEplA0Hhl9uxWn0Z6h7zs57152ep8j%2BXXQ8j1vHX3ubjV04eY2mwr1VcqUKg3ysmyLAvrmDG%2F015NZe9MUORqw4%2BoEcptpWHtpuXiwOYwHD8iRKwc3wdFDwtLOygt0kt344yAAM3vX3uw7vOcSmkjCupyfT2mljBTilfqQvej7l%2F15d8fB1GH9KK6GnFvvScOo1gSap84jicUCX%2B0JVed%2Bly1wHru%2BJXRDcNz7OyXpEGeM20O12EShs8YVwE4y3fW23ZxHsga6twe9qh%2FUIWZ5STIF2yQlSKOck9M6bUOUf%2BWTJfo6Nog%3D%3D"
 
@@ -401,3 +403,18 @@ wacc_5f |>
   ggplot2::labs(title = "WACC Real")
 
 saveRDS(wacc_5f, "Data/wacc_5f.rds")
+
+# Merton Model -----------------------------------------------------------------
+
+merton_data <- data2 |>
+  dplyr::select(c(1:5), divida_no_curto_prazo_em_milhares, divida_no_longo_prazo_em_milhares, prazo_medio_fornecedores_em_dias, c(58), divida_total_liquida_em_milhares, c(59)) |> # names change every day...
+  dplyr::rename(divcp = divida_no_curto_prazo_em_milhares, divlp = divida_no_longo_prazo_em_milhares, pm = prazo_medio_fornecedores_em_dias, v = c(9), k = c(10), vol = c(11)) |>
+  dplyr::mutate(dplyr::across(c(6:dplyr::last_col()), as.double)) |>
+  dplyr::mutate(t_years = pm/365 + divlp/divcp) |> # prazo médio em anos + quantas dívidas de cp (1 ano) tem na dívida de LP.
+  dplyr::mutate(rf  = stats::spline(x = curve_nom$n.biz.days, y = curve_nom$value, xout = t_years*252, method = "natural")$y) |>
+  dplyr::group_by(nome) |>
+  dplyr::mutate(merton = purrr::map(data, RQuantLib::EuropeanOption, type = "call", underlying = v, strike = k, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100))
+
+# Para o prazo médio, dá pra peegar a dívida de lp dividir pela dívida cp e ver quantas dívidas de cp existem na dívida de lp. Pega o prazo da dívida de cp, 1 ano + o valor que der essa razão.
+# O modelo de Merton é igual ao de BS. Só substitui o spot price pelo valor de mercado e o strike price pelo debt value.
+
