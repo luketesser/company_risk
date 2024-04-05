@@ -15,9 +15,10 @@ library(ggthemes)
 library(vroom)
 # source("R/helpers.R")
 
-credit_data <- readRDS("../Data/credit_data_list.rds")
-credit_data_setor <- readRDS("../Data/credit_data_list_setor.rds")
-wacc_5f <- readRDS("../Data/wacc_5f.rds")
+credit_data <- readRDS("Data/credit_data_list.rds")
+credit_data_setor <- readRDS("Data/credit_data_list_setor.rds")
+wacc_5f <- readRDS("Data/wacc_5f.rds")
+merton_data <- readRDS("Data/merton_data.rds")
 
 # Application UI ---------------------------------------------------------------
 
@@ -72,7 +73,7 @@ ui <- bs4Dash::dashboardPage(
 
       bs4Dash::menuItem("Indicadores", tabName = "indicadores", icon = shiny::icon("chart-simple")), # fontawesome.com/search?q=chart&o=r&m=free
       bs4Dash::menuItem("Setor", tabName = "setor", icon = shiny::icon("chart-simple")),
-      bs4Dash::menuItem("WACC", tabName = "wacc", icon = shiny::icon("chart-simple"))),
+      bs4Dash::menuItem("WACC e Modelo de Merton", tabName = "wacc", icon = shiny::icon("chart-simple"))),
 
     bs4Dash::sidebarMenu(shiny::selectInput(inputId = "company", label = "Empresa", choices = unique(credit_data$margem$nome), selectize = TRUE)),
 
@@ -156,7 +157,8 @@ ui <- bs4Dash::dashboardPage(
          bs4Dash::infoBoxOutput(outputId = "wd"),
          bs4Dash::infoBoxOutput(outputId = "re"),
          bs4Dash::infoBoxOutput(outputId = "rd"),
-         bs4Dash::infoBoxOutput(outputId = "wacc_5f")
+         bs4Dash::infoBoxOutput(outputId = "wacc_5f"),
+         bs4Dash::infoBoxOutput(outputId = "merton")
 
        )
 
@@ -207,6 +209,13 @@ credit_data_reactive_tabsetor <- shiny::reactive({
 wacc_rf_reactive <- shiny::reactive({
 
   wacc_5f |>
+    dplyr::filter(nome == input$company)
+
+})
+
+merton_reactive <- shiny::reactive({
+
+  merton_data |>
     dplyr::filter(nome == input$company)
 
 })
@@ -538,6 +547,13 @@ wacc_rf_reactive <- shiny::reactive({
  output$wacc_5f <- bs4Dash::renderInfoBox({
 
    bs4Dash::infoBox(title = "WACC (%) - Real Terms", value = scales::number(wacc_rf_reactive()$wacc[1]*100, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton <- bs4Dash::renderbs4InfoBox({
+
+   bs4Dash::infoBox(title = "Modelo de Merton", value = scales::number(merton_reactive()$merton, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
                     icon = shiny::icon("chart-line"))
 
  })

@@ -410,11 +410,14 @@ merton_data <- data2 |>
   dplyr::select(c(1:5), divida_no_curto_prazo_em_milhares, divida_no_longo_prazo_em_milhares, prazo_medio_fornecedores_em_dias, c(58), divida_total_liquida_em_milhares, c(59)) |> # names change every day...
   dplyr::rename(divcp = divida_no_curto_prazo_em_milhares, divlp = divida_no_longo_prazo_em_milhares, pm = prazo_medio_fornecedores_em_dias, v = c(9), k = c(10), vol = c(11)) |>
   dplyr::mutate(dplyr::across(c(6:dplyr::last_col()), as.double)) |>
-  dplyr::mutate(t_years = pm/365 + divlp/divcp) |> # prazo médio em anos + quantas dívidas de cp (1 ano) tem na dívida de LP.
+  dplyr::mutate(t_years = dplyr::if_else(is.na(pm), 5, pm/365 + divlp/divcp)) |> # prazo médio em anos + quantas dívidas de cp (1 ano) tem na dívida de LP.
+  dplyr::mutate(t_years = dplyr::if_else(t_years > 20, 20, t_years)) |>
   dplyr::mutate(rf  = stats::spline(x = curve_nom$n.biz.days, y = curve_nom$value, xout = t_years*252, method = "natural")$y) |>
+  dplyr::filter(v >= 0 & k >= 0) |>
+  dplyr::mutate(vol = dplyr::if_else(is.na(vol), 20, vol)) |>
   dplyr::group_by(nome) |>
-  dplyr::mutate(merton = purrr::map(data, RQuantLib::EuropeanOption, type = "call", underlying = v, strike = k, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100))
+  dplyr::mutate(merton = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$value)))
 
-# Para o prazo médio, dá pra peegar a dívida de lp dividir pela dívida cp e ver quantas dívidas de cp existem na dívida de lp. Pega o prazo da dívida de cp, 1 ano + o valor que der essa razão.
-# O modelo de Merton é igual ao de BS. Só substitui o spot price pelo valor de mercado e o strike price pelo debt value.
+saveRDS(merton_data, "Data/merton_data.rds")
 
+# cucu <- RQuantLib::EuropeanOption(type = "call", underlying = 10, strike = 9, dividendYield = 0, riskFreeRate = 10/100, maturity = 1, volatility = 20/100)
