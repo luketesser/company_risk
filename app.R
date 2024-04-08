@@ -353,7 +353,7 @@ merton_reactive <- shiny::reactive({
 
  output$div_lp <- bs4Dash::renderInfoBox({
 
-   bs4Dash::infoBox(title = "Dívida no Longo Prazo (%)", value = scales::number(dplyr::last(credit_data_reactive()$div_cp_div_tt_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
+   bs4Dash::infoBox(title = "Dívida no Longo Prazo (%)", value = scales::number(dplyr::last(credit_data_reactive()$div_lp_div_tt_consolid_sim), accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
                     icon = shiny::icon("chart-line"))
 
  })
@@ -365,7 +365,7 @@ merton_reactive <- shiny::reactive({
    value <- credit_data_reactive_setor() |>
      dplyr::filter(subsetor_bovespa == setor)
 
-   value <- value$div_cp_div_tt_consolid_sim
+   value <- value$div_lp_div_tt_consolid_sim
 
    bs4Dash::infoBox(title = paste("Dívida no Longo Prazo (%)", setor, sep = " - "), value = scales::number(value, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
                     icon = shiny::icon("chart-line"))
