@@ -445,21 +445,21 @@ for (i in 1:nrow(merton_data)) {
   # Extract observed values for the current row
   obs_v <- merton_data$v[i]
   obs_k <- merton_data$k[i]
-  obs_rf <- merton_data$rf[i]
+  obs_rf <- merton_data$rf[i]/100
   obs_t_years <- merton_data$t_years[i]
-  obs_volatility <- merton_data$vol[i]
+  obs_volatility <- merton_data$vol[i]/100
 
   # Define the range for simulated values based on the observed values
   v_min <- min(merton_data$v * 0.5, na.rm = TRUE)
   v_max <- max(merton_data$v * 1.5, na.rm = TRUE)
   k_min <- min(merton_data$k * 0.5, na.rm = TRUE)
   k_max <- max(merton_data$k * 1.5, na.rm = TRUE)
-  rf_min <- min(merton_data$rf * 0.5, na.rm = TRUE)
-  rf_max <- max(merton_data$rf * 1.5, na.rm = TRUE)
+  rf_min <- min(merton_data$rf * 0.5, na.rm = TRUE)/100
+  rf_max <- max(merton_data$rf * 1.5, na.rm = TRUE)/100
   t_years_min <- min(merton_data$t_years * 0.5, na.rm = TRUE)
   t_years_max <- max(merton_data$t_years * 1.5, na.rm = TRUE)
-  vol_min <- min(merton_data$vol * 0.5, na.rm = TRUE)
-  vol_max <- max(merton_data$vol * 1.5, na.rm = TRUE)
+  vol_min <- min(merton_data$vol * 0.5, na.rm = TRUE)/100
+  vol_max <- max(merton_data$vol * 1.5, na.rm = TRUE)/100
 
   # Generate simulated values within the defined range for 'v'
   simulated_v <- seq(v_min, v_max, length.out = num_simulations)
