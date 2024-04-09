@@ -556,12 +556,12 @@ for (i in 1:nrow(merton_data)) {
 }
 
 simulated_data <- list(
-  merton_data$nome,
-  merton_values_v,  # Merton values for 'v'
-  merton_values_k,  # Merton values for 'k'
-  merton_values_rf, # Merton values for 'rf'
-  merton_values_t_years,  # Merton values for 't_years'
-  menton_values_vol
+ companies = merton_data$nome,
+ v = merton_values_v,  # Merton values for 'v'
+ k =  merton_values_k,  # Merton values for 'k'
+ rf = merton_values_rf, # Merton values for 'rf'
+ t = merton_values_t_years,  # Merton values for 't_years'
+ vol = menton_values_vol
 )
 
-
+saveRDS(simulated_data, "Data/simulated_merton.rds")
