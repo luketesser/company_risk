@@ -349,17 +349,15 @@ length(unique(rd_data$nome))
 
 rd <- rd_deb |>
   dplyr::group_by(nome, cnpj) |>
-  dplyr::summarise(nome = dplyr::first(nome), cnpj = dplyr::first(cnpj), setor = dplyr::first(naics), rd_deb = dplyr::first(rd_by_sector)) |>
-  dplyr::full_join(dplyr::select(rd_data, nome, cnpj, subsetor_bovespa, rd_real, ativo), by = "nome") |>
-  dplyr::mutate(cnpj = dplyr::coalesce(cnpj.x, cnpj.y)) |>
-  dplyr::select(-c(cnpj.x, cnpj.y)) |>
+  dplyr::summarise(nome = dplyr::first(nome), cnpj = dplyr::first(cnpj), setor = dplyr::first(naics), rd_db = dplyr::first(rd_by_sector)) |>
+  dplyr::full_join(rd_data) |>
   dplyr::mutate(rd_fin = rd_real*100) |>
-  dplyr::select(ativo, nome, cnpj, setor, subsetor_bovespa, rd_deb, rd_fin, -rd_real) |>
+  dplyr::select(c(1:4), subsetor_bovespa ,rd_fin) |>
   dplyr::mutate(rd = dplyr::case_when(
-    is.na(rd_deb) & is.na(rd_fin) ~ NA,
-    is.na(rd_deb) ~ rd_fin,
-    is.na(rd_fin) ~ rd_deb,
-    rd_deb >= rd_fin ~ rd_deb,
+    is.na(rd_db) & is.na(rd_fin) ~ NA,
+    is.na(rd_db) ~ rd_fin,
+    is.na(rd_fin) ~ rd_db,
+    rd_db >= rd_fin ~ rd_db,
     TRUE ~ rd_fin))
 
 # graph
@@ -416,8 +414,154 @@ merton_data <- data2 |>
   dplyr::filter(v >= 0 & k >= 0) |>
   dplyr::mutate(vol = dplyr::if_else(is.na(vol), 20, vol)) |>
   dplyr::group_by(nome) |>
-  dplyr::mutate(merton = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$value)))
+  dplyr::mutate(merton_value = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$value)),
+                merton_delta = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$delta)),
+                merton_gamma = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$gamma)),
+                merton_vega = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$vega)),
+                merton_theta = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$theta)),
+                merton_rho = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$rho))
+                )
+
 
 saveRDS(merton_data, "Data/merton_data.rds")
 
-# cucu <- RQuantLib::EuropeanOption(type = "call", underlying = 10, strike = 9, dividendYield = 0, riskFreeRate = 10/100, maturity = 1, volatility = 20/100)
+
+
+
+
+
+# Define the number of simulations
+num_simulations <- 100  # You can adjust this number as needed
+
+# Initialize lists to store the output values for each variable
+merton_values_v <- list()
+merton_values_k <- list()
+merton_values_rf <- list()
+merton_values_t_years <- list()
+menton_values_vol <- list()
+
+# Loop through each row in the data frame
+for (i in 1:nrow(merton_data)) {
+  # Extract observed values for the current row
+  obs_v <- merton_data$v[i]
+  obs_k <- merton_data$k[i]
+  obs_rf <- merton_data$rf[i]
+  obs_t_years <- merton_data$t_years[i]
+  obs_volatility <- merton_data$vol[i]
+
+  # Define the range for simulated values based on the observed values
+  v_min <- min(merton_data$v * 0.5, na.rm = TRUE)
+  v_max <- max(merton_data$v * 1.5, na.rm = TRUE)
+  k_min <- min(merton_data$k * 0.5, na.rm = TRUE)
+  k_max <- max(merton_data$k * 1.5, na.rm = TRUE)
+  rf_min <- min(merton_data$rf * 0.5, na.rm = TRUE)
+  rf_max <- max(merton_data$rf * 1.5, na.rm = TRUE)
+  t_years_min <- min(merton_data$t_years * 0.5, na.rm = TRUE)
+  t_years_max <- max(merton_data$t_years * 1.5, na.rm = TRUE)
+  vol_min <- min(merton_data$vol * 0.5, na.rm = TRUE)
+  vol_max <- max(merton_data$vol * 1.5, na.rm = TRUE)
+
+  # Generate simulated values within the defined range for 'v'
+  simulated_v <- seq(v_min, v_max, length.out = num_simulations)
+  simulated_k <- seq(k_min, k_max, length.out = num_simulations)
+  simulated_rf <- seq(rf_min, rf_max, length.out = num_simulations)
+  simulated_t_years <- seq(t_years_min, t_years_max, length.out = num_simulations)
+  simulated_vol <- seq(vol_min, vol_max, length.out = num_simulations)
+
+  # Initialize vectors to store merton values for each variable for the current row
+  merton_values_v_row <- numeric(length(simulated_v))
+  merton_values_k_row <- numeric(length(simulated_v))
+  merton_values_rf_row <- numeric(length(simulated_v))
+  merton_values_t_years_row <- numeric(length(simulated_v))
+  merton_values_vol_row <- numeric(length(simulated_v))
+
+  # Loop through each simulated value of 'v'
+  for (j in seq_along(simulated_v)) {
+    # Run the EuropeanOption function on the simulated data for 'v'
+    merton_v <- RQuantLib::EuropeanOption(
+      type = "call",
+      underlying = simulated_v[j],
+      strike = obs_k,
+      dividendYield = 0,
+      riskFreeRate = obs_rf,
+      maturity = obs_t_years,
+      volatility = obs_volatility
+    )
+
+    # Store the value output in the vector
+    merton_values_v_row[j] <- merton_v$value
+
+    # Store the observed values for other variables in separate vectors
+    # k_values <- rep(obs_k, length(simulated_v))
+    # rf_values <- rep(obs_rf, length(simulated_v))
+    # t_years_values <- rep(obs_t_years, length(simulated_v))
+    # vol_values <- rep(obs_v,length(simulated_v))
+
+    # Run the EuropeanOption function on the simulated data for 'k', 'rf', and 't_years'
+    merton_k <- RQuantLib::EuropeanOption(
+      type = "call",
+      underlying = obs_v,
+      strike = simulated_k[j],
+      dividendYield = 0,
+      riskFreeRate = obs_rf,
+      maturity = obs_t_years,
+      volatility = obs_volatility
+    )
+    # Store the value output in the vector
+    merton_values_k_row[j] <- merton_k$value
+
+    merton_rf <- RQuantLib::EuropeanOption(
+      type = "call",
+      underlying = obs_v,
+      strike = obs_k,
+      dividendYield = 0,
+      riskFreeRate = simulated_rf[j],
+      maturity = obs_t_years,
+      volatility = obs_volatility
+    )
+    # Store the value output in the vector
+    merton_values_rf_row[j] <- merton_rf$value
+
+    merton_t_years <- RQuantLib::EuropeanOption(
+      type = "call",
+      underlying = obs_v,
+      strike = obs_k,
+      dividendYield = 0,
+      riskFreeRate = obs_rf,
+      maturity = simulated_t_years[j],
+      volatility = obs_volatility
+    )
+    # Store the value output in the vector
+    merton_values_t_years_row[j] <- merton_t_years$value
+
+    merton_vol <- RQuantLib::EuropeanOption(
+      type = "call",
+      underlying = obs_v,
+      strike = obs_k,
+      dividendYield = 0,
+      riskFreeRate = obs_rf,
+      maturity = obs_t_years,
+      volatility = simulated_vol[j]
+    )
+    # Store the value output in the vector
+    merton_values_vol_row[j] <- merton_vol$value
+  }
+
+  # Store the merton values for 'v', 'k', 'rf', and 't_years' for the current row in the respective lists
+  merton_values_v[[i]] <- merton_values_v_row
+  merton_values_k[[i]] <- merton_values_k_row
+  merton_values_rf[[i]] <- merton_values_rf_row
+  merton_values_t_years[[i]] <- merton_values_t_years_row
+  menton_values_vol[[i]] <- merton_values_vol_row
+}
+
+simulated_data <- list(
+  merton_data$nome,
+  merton_values_v,  # Merton values for 'v'
+  merton_values_k,  # Merton values for 'k'
+  merton_values_rf, # Merton values for 'rf'
+  merton_values_t_years,  # Merton values for 't_years'
+  menton_values_vol
+)
+
+
