@@ -19,6 +19,7 @@ credit_data <- readRDS("Data/credit_data_list.rds")
 credit_data_setor <- readRDS("Data/credit_data_list_setor.rds")
 wacc_5f <- readRDS("Data/wacc_5f.rds")
 merton_data <- readRDS("Data/merton_data.rds")
+simulated_merton <- readRDS("Data/simulated_merton.rds")
 
 # Application UI ---------------------------------------------------------------
 
@@ -95,7 +96,7 @@ ui <- bs4Dash::dashboardPage(
 
         tabName = "indicadores", # must match the tabname in the sidebar
 
-        shiny::fluidRow(bs4Dash::column(width = 4,
+        shiny::fluidRow(bs4Dash::column(width = 6,
                                         bs4Dash::infoBoxOutput(outputId = "divliq_pat"),
                                         bs4Dash::infoBoxOutput(outputId = "div_ebitda"),
                                         bs4Dash::infoBoxOutput(outputId = "liq_corrente"),
@@ -109,7 +110,7 @@ ui <- bs4Dash::dashboardPage(
                                         bs4Dash::infoBoxOutput(outputId = "fcl_divcp")
                                         ),
 
-                        bs4Dash::column(width = 8,
+                        bs4Dash::column(width = 6,
                                         bs4Dash::infoBoxOutput(outputId = "divliq_pat_setor"),
                                         bs4Dash::infoBoxOutput(outputId = "div_ebitda_setor"),
                                         bs4Dash::infoBoxOutput(outputId = "liq_corrente_setor"),
@@ -158,7 +159,21 @@ ui <- bs4Dash::dashboardPage(
          bs4Dash::infoBoxOutput(outputId = "re"),
          bs4Dash::infoBoxOutput(outputId = "rd"),
          bs4Dash::infoBoxOutput(outputId = "wacc_5f"),
-         bs4Dash::infoBoxOutput(outputId = "merton")
+         bs4Dash::infoBoxOutput(outputId = "merton"),
+         bs4Dash::infoBoxOutput(outputId = "merton_delta"),
+         bs4Dash::infoBoxOutput(outputId = "merton_theta"),
+         bs4Dash::infoBoxOutput(outputId = "merton_vega"),
+         bs4Dash::infoBoxOutput(outputId = "merton_rho")
+
+       ),
+
+       shiny::fluidRow(
+
+         bs4Dash::box(shiny::plotOutput(outputId = "merton_v"), title = "Sensitivity to Market Value"),
+         bs4Dash::box(shiny::plotOutput(outputId = "merton_k"), title = "Sensitivity Debt Value"),
+         bs4Dash::box(shiny::plotOutput(outputId = "merton_rf"), title = "Sensitivity Interest Rate"),
+         bs4Dash::box(shiny::plotOutput(outputId = "merton_t"), title = "Sensitivity Debt Maturity"),
+         bs4Dash::box(shiny::plotOutput(outputId = "merton_vol"), title = "Sensitivity to stock volatility")
 
        )
 
@@ -220,6 +235,11 @@ merton_reactive <- shiny::reactive({
 
 })
 
+simulated_reactive <- shiny::reactive({
+
+  which(simulated_merton$companies == input$company)
+
+})
 
   output$divliq_pat <- bs4Dash::renderInfoBox({
 
@@ -551,10 +571,113 @@ merton_reactive <- shiny::reactive({
 
  })
 
- output$merton <- bs4Dash::renderbs4InfoBox({
+ output$merton <- bs4Dash::renderInfoBox({
 
-   bs4Dash::infoBox(title = "Modelo de Merton", value = scales::number(merton_reactive()$merton, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+   bs4Dash::infoBox(title = "Modelo de Merton", value = scales::number(merton_reactive()$merton_value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
                     icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton_delta <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Delta", value = scales::number(merton_reactive()$merton_delta, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton_vega <-  bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Vega", value = scales::number(merton_reactive()$merton_vega, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton_theta <-  bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Theta", value = scales::number(merton_reactive()$merton_theta, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton_rho <-  bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Rho", value = scales::number(merton_reactive()$merton_rho, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$merton_v <- shiny::renderPlot({
+
+   n = simulated_reactive()
+
+   data <- tibble::as_tibble(simulated_merton$v[n], .name_repair = "minimal") |>
+     dplyr::rename(v = c(1))
+
+   data |>
+     ggplot2::ggplot(ggplot2::aes(x = seq(from = 1, to = nrow(data), by = 1), y = v)) +
+     ggplot2::geom_line() +
+     ggplot2::labs(x = "50% a 150% do valor observado.", y = "Merton Valuation") +
+     ggthemes::theme_economist()
+
+ })
+
+ output$merton_k <- shiny::renderPlot({
+
+   n = simulated_reactive()
+
+   data <- tibble::as_tibble(simulated_merton$k[n], .name_repair = "minimal") |>
+     dplyr::rename(k = c(1))
+
+   data |>
+     ggplot2::ggplot(ggplot2::aes(x = seq(from = 1, to = nrow(data), by = 1), y = k)) +
+     ggplot2::geom_line() +
+     ggplot2::labs(x = "50% a 150% do valor observado.", y = "Merton Valuation") +
+     ggthemes::theme_economist()
+
+ })
+
+ output$merton_rf <- shiny::renderPlot({
+
+   n = simulated_reactive()
+
+   data <- tibble::as_tibble(simulated_merton$rf[n], .name_repair = "minimal") |>
+     dplyr::rename(rf = c(1))
+
+   data |>
+     ggplot2::ggplot(ggplot2::aes(x = seq(from = 1, to = nrow(data), by = 1), y = rf)) +
+     ggplot2::geom_line() +
+     ggplot2::labs(x = "50% a 150% do valor observado.", y = "Merton Valuation") +
+     ggthemes::theme_economist()
+
+ })
+
+ output$merton_t <- shiny::renderPlot({
+
+   n = simulated_reactive()
+
+   data <- tibble::as_tibble(simulated_merton$t[n], .name_repair = "minimal") |>
+     dplyr::rename(t = c(1))
+
+   data |>
+     ggplot2::ggplot(ggplot2::aes(x = seq(from = 1, to = nrow(data), by = 1), y = t)) +
+     ggplot2::geom_line() +
+     ggplot2::labs(x = "50% a 150% do valor observado.", y = "Merton Valuation") +
+     ggthemes::theme_economist()
+
+ })
+
+ output$merton_vol <- shiny::renderPlot({
+
+   n = simulated_reactive()
+
+   data <- tibble::as_tibble(simulated_merton$vol[n], .name_repair = "minimal") |>
+     dplyr::rename(vol = c(1))
+
+   data |>
+     ggplot2::ggplot(ggplot2::aes(x = seq(from = 1, to = nrow(data), by = 1), y = vol)) +
+     ggplot2::geom_line() +
+     ggplot2::labs(x = "50% a 150% do valor observado.", y = "Merton Valuation") +
+     ggthemes::theme_economist()
 
  })
 
