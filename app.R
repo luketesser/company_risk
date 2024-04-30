@@ -160,10 +160,12 @@ ui <- bs4Dash::dashboardPage(
          bs4Dash::infoBoxOutput(outputId = "rd"),
          bs4Dash::infoBoxOutput(outputId = "wacc_5f"),
          bs4Dash::infoBoxOutput(outputId = "merton"),
+         bs4Dash::infoBoxOutput(outputId = "value"),
          bs4Dash::infoBoxOutput(outputId = "merton_delta"),
          bs4Dash::infoBoxOutput(outputId = "merton_theta"),
          bs4Dash::infoBoxOutput(outputId = "merton_vega"),
-         bs4Dash::infoBoxOutput(outputId = "merton_rho")
+         bs4Dash::infoBoxOutput(outputId = "merton_rho"),
+         bs4Dash::infoBoxOutput(outputId = "risk")
 
        ),
 
@@ -573,7 +575,14 @@ simulated_reactive <- shiny::reactive({
 
  output$merton <- bs4Dash::renderInfoBox({
 
-   bs4Dash::infoBox(title = "Modelo de Merton", value = scales::number(merton_reactive()$merton_value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+   bs4Dash::infoBox(title = "Valuation", value = scales::number(merton_reactive()$merton_value, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$value <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Valor de Mercado", value = scales::number(merton_reactive()$stock_price, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
                     icon = shiny::icon("chart-line"))
 
  })
@@ -602,6 +611,13 @@ simulated_reactive <- shiny::reactive({
  output$merton_rho <-  bs4Dash::renderInfoBox({
 
    bs4Dash::infoBox(title = "Rho", value = scales::number(merton_reactive()$merton_rho, accuracy = 0.01, big.mark = ".", decimal.mark = ","),
+                    icon = shiny::icon("chart-line"))
+
+ })
+
+ output$risk <- bs4Dash::renderInfoBox({
+
+   bs4Dash::infoBox(title = "Risk", value = scales::number((merton_reactive()$stock_price/merton_reactive()$merton_value - 1)*100, accuracy = 0.01, big.mark = ".", decimal.mark = ",", suffix = "%"),
                     icon = shiny::icon("chart-line"))
 
  })

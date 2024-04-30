@@ -6,7 +6,9 @@ url <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/mdZmSrKkd
 
 # url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/gwLQ37fNt88xFQzAEDvgHbNKFajTXJ6GhSVu6IS5osOfqHayUOhOYOZ0aU85iFKOp9siH0C1jkRSZeVsOJdqTnxtQBOlQ7Ri0Y7DHiRgtx7aHXIrpR%2Fl9bVSfkM%2B7beTlP%2BJGDkNd7HYxLwn50RFGDvXHy%2BaCif3E9JB2IKzpZrPtxs%2F4tSpUsj0eW2TeCQ6ATKKIITeB8kuJOQUL%2BTX3nxanvh9p5eB3IZQ1TklXO8gvXSJvhXAqOqXjpofspCCYG19AQc4Lo2a4%2BzNbjHoHKx9WEo5l5mzk%2F40ZzH%2B8R%2BQC6JFTFf8SYSL4njD%2Fbu%2BwfheJc%2FH%2BeBOXtJtwvE9tg%3D%3D"
 
-url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/TrFrvsaBVvj0cCt7yROZY31S7z6EALX1daODKIpgk07F5Z%2F5h3dIrVc2BoZFZPrydR5zFPFfeXgl8UOAkFbrI1at2KZzySumQ1FCOpJA8EgesqrI60ctCElwD9EJTlSCy%2BDsLNs0YYz8Vw5Uz7AOJa6IV0bicUeVHw%2FyX0hVeOQugOJh6mjUetkm6lgqJtlxduXuV0nPHBsUR7XKV44bvrBkEugtZJjBUBHOCTqEwxOdMZH9mk5X9Uql8AuBHbskzoGHguWXuqw%2F4tRpNerQPsvJ0WSEU9JkuNVhGFnjjpiC08T3dSGJL1ml5UUqaJdb58aLIeSGA3nlvNgNJ4YTAw%3D%3D"
+# url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/TrFrvsaBVvj0cCt7yROZY31S7z6EALX1daODKIpgk07F5Z%2F5h3dIrVc2BoZFZPrydR5zFPFfeXgl8UOAkFbrI1at2KZzySumQ1FCOpJA8EgesqrI60ctCElwD9EJTlSCy%2BDsLNs0YYz8Vw5Uz7AOJa6IV0bicUeVHw%2FyX0hVeOQugOJh6mjUetkm6lgqJtlxduXuV0nPHBsUR7XKV44bvrBkEugtZJjBUBHOCTqEwxOdMZH9mk5X9Uql8AuBHbskzoGHguWXuqw%2F4tRpNerQPsvJ0WSEU9JkuNVhGFnjjpiC08T3dSGJL1ml5UUqaJdb58aLIeSGA3nlvNgNJ4YTAw%3D%3D"
+
+url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/jnfuHbGdwMMwJ%2FMDqjJVWu%2BYkeZ8nmvK3KZqzau%2FRCjSgROU5CB03wTKjnX8UHU2gVyEvWkBJwrqjfwweDoZUpQTHlQG4Bts5ZM5feugF4LmnF6vF%2F0GFXwbEX6u%2BNbW3Tqfftllp5M3yTW2Dg3Lru1XsqSDJzV1Fxs%2BRVFLqtrq5xlV1bVn6fhn7B7MTmoIVMaGNP5cEdgvP9iC0mf7Yxm3P5Zk5%2BYMF1jSYhQZoYej0fQAN1iNI1osiK3B1sKUJCbHRedUjx3LJM1GPa03lIjpZwc5f9ukTZaZk42VL%2BRJZP8v8pAZF84ywZgiGsDTmQVjuZCUNjMhCSYyDJKSUg%3D%3D"
 
 # url2 <- "https://api.data.economatica.com/1/oficial/datafeed/download/1/kDTT31rRCcBvGk753nfs9FU%2BbPflomweKgEplA0Hhl9uxWn0Z6h7zs57152ep8j%2BXXQ8j1vHX3ubjV04eY2mwr1VcqUKg3ysmyLAvrmDG%2F015NZe9MUORqw4%2BoEcptpWHtpuXiwOYwHD8iRKwc3wdFDwtLOygt0kt344yAAM3vX3uw7vOcSmkjCupyfT2mljBTilfqQvej7l%2F15d8fB1GH9KK6GnFvvScOo1gSap84jicUCX%2B0JVed%2Bly1wHru%2BJXRDcNz7OyXpEGeM20O12EShs8YVwE4y3fW23ZxHsga6twe9qh%2FUIWZ5STIF2yQlSKOck9M6bUOUf%2BWTJfo6Nog%3D%3D"
 
@@ -405,8 +407,8 @@ saveRDS(wacc_5f, "Data/wacc_5f.rds")
 # Merton Model -----------------------------------------------------------------
 
 merton_data <- data2 |>
-  dplyr::select(c(1:5), divida_no_curto_prazo_em_milhares, divida_no_longo_prazo_em_milhares, prazo_medio_fornecedores_em_dias, c(58), divida_total_liquida_em_milhares, c(59)) |> # names change every day...
-  dplyr::rename(divcp = divida_no_curto_prazo_em_milhares, divlp = divida_no_longo_prazo_em_milhares, pm = prazo_medio_fornecedores_em_dias, v = c(9), k = c(10), vol = c(11)) |>
+  dplyr::select(c(1:5), divida_no_curto_prazo_em_milhares, divida_no_longo_prazo_em_milhares, prazo_medio_fornecedores_em_dias, c(58), divida_total_liquida_em_milhares, c(59), c(60), c(61)) |> # names change every day...
+  dplyr::rename(divcp = divida_no_curto_prazo_em_milhares, divlp = divida_no_longo_prazo_em_milhares, pm = prazo_medio_fornecedores_em_dias, v = c(9), k = c(10), vol = c(11), qtde_stock = c(12), stock_price = c(13)) |>
   dplyr::mutate(dplyr::across(c(6:dplyr::last_col()), as.double)) |>
   dplyr::mutate(t_years = dplyr::if_else(is.na(pm), 5, pm/365 + divlp/divcp)) |> # prazo médio em anos + quantas dívidas de cp (1 ano) tem na dívida de LP.
   dplyr::mutate(t_years = dplyr::if_else(t_years > 20, 20, t_years)) |>
@@ -414,7 +416,7 @@ merton_data <- data2 |>
   dplyr::filter(v >= 0 & k >= 0) |>
   dplyr::mutate(vol = dplyr::if_else(is.na(vol), 20, vol)) |>
   dplyr::group_by(nome) |>
-  dplyr::mutate(merton_value = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$value)),
+  dplyr::mutate(merton_value = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$value/qtde_stock)),
                 merton_delta = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$delta)),
                 merton_gamma = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$gamma)),
                 merton_vega = mean(purrr::map_dbl(data, ~ RQuantLib::EuropeanOption(type = "call", underlying = v, strike = k, dividendYield = 0, riskFreeRate = rf/100, maturity = t_years, volatility = vol/100)$vega)),

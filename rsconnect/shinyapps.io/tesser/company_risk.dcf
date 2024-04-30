@@ -5,7 +5,7 @@ account: tesser
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 11680389
-bundleId: 8473425
+bundleId: 8560625
 url: https://tesser.shinyapps.io/company_risk/
 version: 1
 asMultiple: FALSE
